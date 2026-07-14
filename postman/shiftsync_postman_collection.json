@@ -124,16 +124,15 @@
                   "});",
                   "",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Response contains access and refresh tokens\", function () {",
+                  "pm.test(\"Response contains access token\", function () {",
                   "    pm.expect(jsonData.access_token).to.be.a('string');",
-                  "    pm.expect(jsonData.refresh_token).to.be.a('string');",
                   "    pm.expect(jsonData.token_type).to.eql(\"bearer\");",
                   "});",
                   "",
                   "if (jsonData.access_token) {",
+                  "    pm.environment.set(\"nurse_access_token\", jsonData.access_token);",
                   "    pm.environment.set(\"access_token\", jsonData.access_token);",
-                  "    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
-                  "    console.log(\"Saved Nurse access_token to environment!\");",
+                  "    console.log(\"Saved nurse_access_token to environment!\");",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -184,9 +183,8 @@
                   "",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.access_token) {",
-                  "    pm.environment.set(\"access_token\", jsonData.access_token);",
-                  "    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
-                  "    console.log(\"Saved Admin access_token to environment!\");",
+                  "    pm.environment.set(\"admin_access_token\", jsonData.access_token);",
+                  "    console.log(\"Saved admin_access_token to environment!\");",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -237,9 +235,8 @@
                   "",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.access_token) {",
-                  "    pm.environment.set(\"access_token\", jsonData.access_token);",
-                  "    pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
-                  "    console.log(\"Saved Partner access_token to environment!\");",
+                  "    pm.environment.set(\"partner_access_token\", jsonData.access_token);",
+                  "    console.log(\"Saved partner_access_token to environment!\");",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -289,10 +286,9 @@
                   "});",
                   "",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Profile matches active JWT user\", function () {",
+                  "pm.test(\"Profile matches active Nurse user\", function () {",
                   "    pm.expect(jsonData).to.have.property(\"uuid\");",
-                  "    pm.expect(jsonData).to.have.property(\"phone\");",
-                  "    pm.expect(jsonData).to.have.property(\"department\");",
+                  "    pm.expect(jsonData.role).to.eql(\"nurse\");",
                   "});",
                   "",
                   "if (jsonData.uuid) {",
@@ -312,7 +308,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
@@ -346,10 +342,8 @@
                   "",
                   "var jsonData = pm.response.json();",
                   "if (jsonData.access_token) {",
+                  "    pm.environment.set(\"nurse_access_token\", jsonData.access_token);",
                   "    pm.environment.set(\"access_token\", jsonData.access_token);",
-                  "    if (jsonData.refresh_token) {",
-                  "        pm.environment.set(\"refresh_token\", jsonData.refresh_token);",
-                  "    }",
                   "    console.log(\"Refreshed access_token stored in environment\");",
                   "}"
                 ],
@@ -358,6 +352,16 @@
             }
           ],
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{nurse_access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "POST",
             "header": [
               {
@@ -367,7 +371,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "raw": "{}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -425,7 +429,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
@@ -471,7 +475,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
@@ -518,7 +522,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{admin_access_token}}",
                   "type": "string"
                 }
               ]
@@ -573,7 +577,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{admin_access_token}}",
                   "type": "string"
                 }
               ]
@@ -644,7 +648,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
@@ -708,7 +712,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
@@ -757,7 +761,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{partner_access_token}}",
                   "type": "string"
                 }
               ]
@@ -807,7 +811,7 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{access_token}}",
+                  "value": "{{nurse_access_token}}",
                   "type": "string"
                 }
               ]
