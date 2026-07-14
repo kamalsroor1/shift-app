@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../theme/app_tokens.dart';
 import '../widgets/app_card.dart';
 import '../widgets/shift_badge.dart';
@@ -9,6 +10,11 @@ import '../../features/ledger/presentation/providers/ledger_provider.dart';
 import '../../features/schedule/presentation/providers/schedule_provider.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/welcome_screen.dart';
+import '../../features/schedule/presentation/widgets/day_details_sheet.dart';
+import '../../features/schedule/presentation/widgets/add_edit_shift_modal.dart';
+import '../../features/marketplace/presentation/marketplace_screen.dart';
+import '../../features/ledger/presentation/ledger_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 
 class MainNavigationScaffold extends ConsumerStatefulWidget {
   const MainNavigationScaffold({super.key});
@@ -292,61 +298,17 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     Map<DateTime, ShiftType> shifts,
     AsyncValue<List<Map<String, dynamic>>> ledgerAsync,
   ) {
+    if (_currentIndex == 1) {
+      return const MarketplaceScreen();
+    }
+    if (_currentIndex == 2) {
+      return const LedgerScreen();
+    }
+    if (_currentIndex == 3) {
+      return const NotificationsScreen();
+    }
     if (_currentIndex == 4) {
       return _buildAccountScreen(context);
-    }
-
-    if (_currentIndex != 0) {
-      final tabNames = [
-        'الجدول والورديات',
-        'سوق التبادلات',
-        'المحفظة والمالية',
-        'الطلبات والإشعارات',
-        'حسابي',
-      ];
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          title: Text(tabNames[_currentIndex], style: AppTextStyles.displayMd),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.logout_rounded, color: AppColors.debtRed),
-              tooltip: 'تسجيل الخروج',
-              onPressed: () => _confirmAndLogout(context),
-            ),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-        ),
-        body: Center(
-          child: AppCard(
-            padding: const EdgeInsets.all(AppSpacing.xxxl),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _currentIndex == 1
-                      ? Icons.swap_horizontal_circle
-                      : _currentIndex == 2
-                          ? Icons.account_balance_wallet
-                          : _currentIndex == 3
-                              ? Icons.notifications
-                              : Icons.person,
-                  size: 56,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text('قسم ${tabNames[_currentIndex]}', style: AppTextStyles.headingLg),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  'متصل بوكلاء البيانات الحية ومستودعات التخزين الآمن.',
-                  style: AppTextStyles.bodyMd,
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
     }
 
     return Scaffold(
@@ -407,54 +369,143 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
 
             const SizedBox(height: AppSpacing.xxxl),
 
-            Text('تقويم الورديات (تصفح شهر بشهر)', style: AppTextStyles.label),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('تقويم الورديات (تصفح شهر بشهر)', style: AppTextStyles.label),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.surface,
+                  ),
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                  label: Text('إضافة مناوبة', style: AppTextStyles.label.copyWith(color: AppColors.surface)),
+                  onPressed: () {
+                    final normalized = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => AddEditShiftModal(
+                        initialDate: _selectedDay,
+                        initialShift: shifts[normalized] ?? _fallbackShifts[normalized],
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
             const SizedBox(height: AppSpacing.md),
             ShiftCalendar(
               selectedDay: _selectedDay,
               onDaySelected: (selected, focused) {
                 setState(() => _selectedDay = selected);
+                final normalized = DateTime(selected.year, selected.month, selected.day);
+                final assigned = shifts[normalized] ?? _fallbackShifts[normalized] ?? ShiftType.off;
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => DayDetailsSheet(
+                    selectedDate: selected,
+                    assignedShift: assigned,
+                    onSwitchToMarketplace: () => setState(() => _currentIndex = 1),
+                  ),
+                );
               },
               shifts: shifts,
             ),
 
             const SizedBox(height: AppSpacing.xxxl),
 
-            Text('الورديات المجدولة (حسب اليوم المختار)', style: AppTextStyles.label),
+            Text('الورديات المجدولة لليوم المختار (${DateFormat('yyyy-MM-dd').format(_selectedDay)})', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
 
-            AppCard(
-              accentColor: AppColors.shiftLong,
-              onTap: () {},
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            Builder(
+              builder: (context) {
+                final normalized = DateTime(_selectedDay.year, _selectedDay.month, _selectedDay.day);
+                final currentShift = shifts[normalized] ?? _fallbackShifts[normalized] ?? ShiftType.off;
+                final isOff = currentShift == ShiftType.off;
+
+                return AppCard(
+                  accentColor: isOff
+                      ? AppColors.shiftOff
+                      : currentShift == ShiftType.long
+                          ? AppColors.shiftLong
+                          : AppColors.shiftNight,
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (_) => DayDetailsSheet(
+                        selectedDate: _selectedDay,
+                        assignedShift: currentShift,
+                        onSwitchToMarketplace: () => setState(() => _currentIndex = 1),
+                      ),
+                    );
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('وردية اليوم المختار • ١٢ ساعة', style: AppTextStyles.headingMd),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text('٠٧:٣٠ صباحاً – ٠٧:٣٠ مساءً', style: AppTextStyles.bodySm),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isOff
+                                ? 'إجازة / راحة اليوم المختار'
+                                : currentShift == ShiftType.long
+                                    ? 'وردية صباحية طويلة • ١٢ ساعة'
+                                    : 'وردية سهر ليلية • ١٢ ساعة',
+                            style: AppTextStyles.headingMd,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            isOff
+                                ? 'اضغط لعرض تفاصيل الزملاء أو إضافة وردية جديدة'
+                                : currentShift == ShiftType.long
+                                    ? '٠٧:٣0 صباحاً – ٠٧:٣٠ مساءً (اضغط للتفاصيل)'
+                                    : '٠٧:٣٠ مساءً – ٠٧:٣٠ صباحاً (اضغط للتفاصيل)',
+                            style: AppTextStyles.bodySm,
+                          ),
+                        ],
+                      ),
+                      ShiftBadge(shiftType: currentShift),
                     ],
                   ),
-                  const ShiftBadge(shiftType: ShiftType.long),
-                ],
-              ),
+                );
+              },
             ),
 
             const SizedBox(height: AppSpacing.lg),
 
             AppCard(
               accentColor: AppColors.shiftNight,
-              onTap: () {},
+              onTap: () {
+                final nextDay = _selectedDay.add(const Duration(days: 1));
+                final normalizedNext = DateTime(nextDay.year, nextDay.month, nextDay.day);
+                final nextShift = shifts[normalizedNext] ?? _fallbackShifts[normalizedNext] ?? ShiftType.night;
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  backgroundColor: Colors.transparent,
+                  builder: (_) => DayDetailsSheet(
+                    selectedDate: nextDay,
+                    assignedShift: nextShift,
+                    onSwitchToMarketplace: () => setState(() => _currentIndex = 1),
+                  ),
+                );
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('المناوبة التالية • سهر ليلي', style: AppTextStyles.headingMd),
+                      Text('المناوبة التالية (${DateFormat('yyyy-MM-dd').format(_selectedDay.add(const Duration(days: 1)))})', style: AppTextStyles.headingMd),
                       const SizedBox(height: AppSpacing.xs),
-                      Text('٠٧:٣٠ مساءً – ٠٧:٣٠ صباحاً', style: AppTextStyles.bodySm),
+                      Text('٠٧:٣٠ مساءً – ٠٧:٣٠ صباحاً (اضغط لعرض التفاصيل)', style: AppTextStyles.bodySm),
                     ],
                   ),
                   const ShiftBadge(shiftType: ShiftType.night),
@@ -487,8 +538,8 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
                   ];
                 }
                 return entries.map((entry) {
-                  final amount = entry['amount_egp'] ?? 400;
-                  final isOwed = entry['is_claim'] == true;
+                  final amount = entry['amount_egp'] ?? entry['amount'] ?? 400;
+                  final isOwed = entry['is_claim'] == true || entry['is_debtor'] == false;
                   return Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                     child: AppCard(
@@ -525,7 +576,7 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
                             ],
                           ),
                           Text(
-                            '$amount ج.م',
+                            '${_formatArabicAmount(amount)} ج.م',
                             style: AppTextStyles.displayMd.copyWith(
                               color: isOwed ? AppColors.claimGreen : AppColors.debtRed,
                             ),
@@ -543,6 +594,23 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
         ),
       ),
     );
+  }
+
+  String _formatArabicAmount(dynamic amount) {
+    final numVal = (amount is num) ? amount : double.tryParse(amount.toString()) ?? 0;
+    final intVal = numVal.truncate();
+    final westernStr = intVal.toString();
+    const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    final buffer = StringBuffer();
+    for (int i = 0; i < westernStr.length; i++) {
+      final code = westernStr.codeUnitAt(i);
+      if (code >= 48 && code <= 57) {
+        buffer.write(arabicDigits[code - 48]);
+      } else {
+        buffer.write(westernStr[i]);
+      }
+    }
+    return buffer.toString();
   }
 
   Widget _buildFallbackDebit() {

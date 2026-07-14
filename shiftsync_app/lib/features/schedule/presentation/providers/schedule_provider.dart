@@ -33,4 +33,11 @@ class ScheduleNotifier extends AsyncNotifier<Map<DateTime, ShiftType>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async => await _fetchMonth(year, month));
   }
+
+  Future<void> updateShift(DateTime date, ShiftType newShift) async {
+    final normalized = DateTime(date.year, date.month, date.day);
+    final currentMap = state.value != null ? Map<DateTime, ShiftType>.from(state.value!) : <DateTime, ShiftType>{};
+    currentMap[normalized] = newShift;
+    state = AsyncValue.data(currentMap);
+  }
 }

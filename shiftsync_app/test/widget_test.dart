@@ -3,17 +3,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftsync_app/core/navigation/main_navigation_scaffold.dart';
 import 'package:shiftsync_app/main.dart';
+import 'package:dio/dio.dart';
+import 'package:shiftsync_app/core/providers/core_providers.dart';
 
 void main() {
   testWidgets('Shiftak onboarding, login flow, interactive calendar, and EGP ledger work seamlessly with Riverpod', (WidgetTester tester) async {
     // Build our app starting from WelcomeScreen
     await tester.pumpWidget(
-      const ProviderScope(
-        child: ShiftakApp(),
+      ProviderScope(
+        overrides: [
+          dioProvider.overrideWithValue(
+            Dio(
+              BaseOptions(
+                baseUrl: 'http://localhost:8000',
+                connectTimeout: const Duration(milliseconds: 100),
+                receiveTimeout: const Duration(milliseconds: 100),
+              ),
+            ),
+          ),
+        ],
+        child: const ShiftakApp(),
       ),
     );
     await tester.pumpAndSettle();
-
     // Verify WelcomeScreen
     expect(find.text('شِفْتَك • Shiftak'), findsOneWidget);
     expect(find.text('تسجيل الدخول للمناوبات'), findsOneWidget);
@@ -65,5 +77,57 @@ void main() {
     // Cancel logout dialog
     await tester.tap(find.text('إلغاء'));
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('Phase 5 interactive tabs (Marketplace, Ledger EGP, Notifications) render and navigate seamlessly', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          dioProvider.overrideWithValue(
+            Dio(
+              BaseOptions(
+                baseUrl: 'http://localhost:8000',
+                connectTimeout: const Duration(milliseconds: 100),
+                receiveTimeout: const Duration(milliseconds: 100),
+              ),
+            ),
+          ),
+        ],
+        child: const ShiftakApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Tap welcome screen button to enter LoginScreen
+    await tester.tap(find.text('تسجيل الدخول للمناوبات'));
+    await tester.pumpAndSettle();
+
+    // Login
+    await tester.ensureVisible(find.textContaining('دخول تجريبي سريع'));
+    await tester.tap(find.textContaining('دخول تجريبي سريع'));
+    await tester.pumpAndSettle();
+
+    // 1. Navigate to Marketplace Tab (index 1)
+    await tester.tap(find.text('سوق التبادلات'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('سوق تبادلات الورديات'), findsOneWidget);
+    expect(find.text('التبادل الآمن بين الزملاء'), findsOneWidget);
+    expect(find.textContaining('طلب تبادل جديد'), findsOneWidget);
+
+    // 2. Navigate to Financial Ledger Tab (index 2)
+    await tester.tap(find.text('المحفظة والمالية'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('المحفظة المالية والديون (EGP)'), findsOneWidget);
+    expect(find.text('كل المعاملات المالية'), findsOneWidget);
+    expect(find.textContaining('تسجيل مطالبة / سلفة'), findsOneWidget);
+
+    // 3. Navigate to Notifications Tab (index 3)
+    await tester.tap(find.text('الطلبات والإشعارات'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('الطلبات والتنبيهات الحية'), findsOneWidget);
+    expect(find.textContaining('موافقة على طلب التبادل'), findsOneWidget);
   });
 }
