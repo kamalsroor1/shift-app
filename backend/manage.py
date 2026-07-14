@@ -20,6 +20,14 @@ import subprocess
 import asyncio
 from typing import Optional
 
+# Auto-detect and re-launch inside virtual environment if running with global Python outside venv
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+VENV_PYTHON = os.path.join(BACKEND_DIR, "venv", "Scripts", "python.exe")
+if not sys.prefix.endswith("venv") and os.path.exists(VENV_PYTHON) and os.path.abspath(sys.executable) != os.path.abspath(VENV_PYTHON):
+    # Re-launch current script using the virtual environment's python.exe
+    result = subprocess.run([VENV_PYTHON, __file__] + sys.argv[1:])
+    sys.exit(result.returncode)
+
 # Force UTF-8 encoding for Windows terminals to prevent UnicodeEncodeError with emojis/symbols
 if sys.platform.startswith("win"):
     if hasattr(sys.stdout, "reconfigure"):
@@ -28,10 +36,14 @@ if sys.platform.startswith("win"):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     os.environ["PYTHONIOENCODING"] = "utf-8"
 
-import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich import print as rprint
+try:
+    import typer
+    from rich.console import Console
+    from rich.panel import Panel
+    from rich import print as rprint
+except ModuleNotFoundError:
+    print("❌ Error: Required modules (typer, rich) not found. Please activate your venv (.\\venv\\Scripts\\activate) or run pip install -e .[dev]")
+    sys.exit(1)
 
 app = typer.Typer(
     name="shiftsync",
