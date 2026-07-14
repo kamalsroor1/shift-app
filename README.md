@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="files/full-logo-with-text.png" alt="Shiftak Official Logo" width="360" />
+</p>
+
 # 🏥 Shiftak • شِفْتَك
 **نظام إدارة المناوبات الطبية، تبديل الورديات الذكي، والتسويات المالية الفورية للكوادر الصحية**  
 *(Arabic-First / RTL-Default Medical & Financial Roster System)*

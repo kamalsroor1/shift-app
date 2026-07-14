@@ -17,31 +17,37 @@ class WelcomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Spacer(),
-              // Sleek Hero Logo Container inspired by clean white medical aesthetic
+              // Sleek Hero Logo Container with official Shiftak symbol
               Container(
-                width: 110,
-                height: 110,
+                width: 120,
+                height: 120,
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: AppShadows.modalShadow,
                   border: Border.all(color: AppColors.primaryLight, width: 2),
                 ),
-                child: const Center(
-                  child: Icon(
-                    Icons.sync_alt_rounded,
-                    size: 56,
-                    color: AppColors.primary,
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/logo-colord.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
               ),
 
               const SizedBox(height: AppSpacing.xxxl),
 
-              // Title and Subtitle
+              // Title, Official Slogan and Subtitle
               Text(
                 'شِفْتَك • Shiftak',
                 style: AppTextStyles.displayLg.copyWith(color: AppColors.primary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '— ندير مناوباتك .. نوفق وقتك —',
+                style: AppTextStyles.headingSm.copyWith(color: AppColors.claimGreen, fontWeight: FontWeight.w700),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
