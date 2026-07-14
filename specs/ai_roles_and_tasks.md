@@ -932,3 +932,27 @@ If a bug only manifests on MySQL (not SQLite used in tests),
 a **diagnostic scratch script** must be written and run against the local MySQL database
 to confirm the fix before pushing.
 
+---
+
+### RULE-007: Arabic-First / RTL-Default Application Architecture (`@flutter-agent`)
+
+**Non-negotiable rule for all UI development:**
+ShiftSync is an **Arabic-First** medical and financial shift management system designed primarily for Arabic-speaking healthcare personnel and hospitals.
+
+1. **Mandatory Localization (`Locale('ar')`)**:
+   - The Flutter app MUST be configured with `Locale('ar')` as its primary/default locale in `MaterialApp`.
+   - `flutter_localizations` delegates (`GlobalMaterialLocalizations.delegate`, `GlobalCupertinoLocalizations.delegate`, `GlobalWidgetsLocalizations.delegate`) MUST be included.
+   - All UI layouts must naturally render **Right-to-Left (RTL)**.
+
+2. **Typography (`Cairo` / `Tajawal`)**:
+   - Do not use English fonts like `Inter` as the primary UI font.
+   - The typography token (`AppTextStyles`) MUST use `GoogleFonts.cairo()` or `GoogleFonts.tajawal()` to ensure elegant, highly legible Arabic character rendering for medical schedules and financial numbers.
+
+3. **Directional Accent Bars (`AppCard`)**:
+   - Card accent indicator bars (`accentColor` in `AppCard`) MUST adapt to directional reading.
+   - In RTL (`Directionality.of(context) == TextDirection.rtl`), the vertical colored accent bar must render on the **Right Edge** (leading side) of the card instead of the left.
+
+4. **Terminology & Copywriting**:
+   - All screen titles, buttons, labels, and financial descriptions MUST use clear, professional, and accessible medical Arabic terminology (e.g., "الورديات القادمة", "وردية صباحية طويلة", "سهر ليلي", "عليا فلوس (I OWE)", "ليا فلوس (OWED TO ME)", "طلب تبديل وردية", "سجل التبادلات والمحافظ").
+
+

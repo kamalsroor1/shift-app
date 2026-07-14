@@ -1,30 +1,27 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:shiftsync_app/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('ShiftSyncApp Arabic token showcase screen renders correctly', (WidgetTester tester) async {
+    // Build our Arabic-First app inside ProviderScope and trigger a frame.
+    await tester.pumpWidget(
+      const ProviderScope(
+        child: ShiftSyncApp(),
+      ),
+    );
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Allow Google Fonts and localization delegates to settle
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that our Arabic headings render properly using exact matching where appropriate
+    expect(find.textContaining('نظام شِفْت سينك'), findsOneWidget);
+    expect(find.textContaining('كمال سرور'), findsOneWidget);
+    expect(find.textContaining('الورديات القادمة هذا الأسبوع'), findsOneWidget);
+    expect(find.text('صباحية طويلة'), findsOneWidget);
+    expect(find.text('سهر ليلي'), findsOneWidget);
+    expect(find.text('عليا فلوس (I OWE)'), findsOneWidget);
+    expect(find.text('ليا فلوس (OWED TO ME)'), findsOneWidget);
   });
 }
