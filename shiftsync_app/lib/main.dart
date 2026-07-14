@@ -23,7 +23,7 @@ class ShiftSyncApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ShiftSync • شِفْت سينك',
+      title: 'Shiftak • شِفْتَك',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       // Arabic-First Localization & RTL Support
@@ -172,7 +172,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text('نظام شِفْت سينك • المناوبات والمالية', style: AppTextStyles.displayMd),
+        title: Text('نظام شِفْتَك • المناوبات والمالية', style: AppTextStyles.displayMd),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),

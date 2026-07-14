@@ -14,7 +14,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify WelcomeScreen
-    expect(find.text('شِفْت سينك • ShiftSync'), findsOneWidget);
+    expect(find.text('شِفْتَك • Shiftak'), findsOneWidget);
     expect(find.text('تسجيل الدخول للمناوبات'), findsOneWidget);
 
     // Tap to enter LoginScreen
@@ -31,7 +31,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify MainNavigationScaffold items (Header, Calendar, Egyptian Pound Ledger, Bottom Nav)
-    expect(find.textContaining('نظام شِفْت سينك'), findsOneWidget);
+    expect(find.textContaining('نظام شِفْتَك'), findsOneWidget);
     expect(find.textContaining('كمال سرور'), findsOneWidget);
     expect(find.text('تقويم الورديات (تصفح شهر بشهر)'), findsOneWidget);
     expect(find.text('عليا فلوس (I OWE)'), findsOneWidget);

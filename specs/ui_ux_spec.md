@@ -1,6 +1,6 @@
-# ShiftSync — UI/UX Specification
-> **Status:** `DRAFT` | **Version:** `1.0.0` | **Last Updated:** 2026-07-14  
-> **Platform:** Flutter 3.22+ | **Theme:** Minimalist Light | **Primary Font:** Inter
+# Shiftak (`شِفْتَك`) — UI/UX Specification & Design System
+> **Status:** `APPROVED` | **Version:** `1.0.0` | **Last Updated:** 2026-07-14  
+> **Platform:** Flutter 3.22+ | **Theme:** Minimalist Light | **Primary Font:** Cairo (RTL Default)
 
 ---
 

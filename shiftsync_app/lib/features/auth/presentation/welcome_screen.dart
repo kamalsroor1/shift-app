@@ -40,7 +40,7 @@ class WelcomeScreen extends StatelessWidget {
 
               // Title and Subtitle
               Text(
-                'شِفْت سينك • ShiftSync',
+                'شِفْتَك • Shiftak',
                 style: AppTextStyles.displayLg.copyWith(color: AppColors.primary),
                 textAlign: TextAlign.center,
               ),
