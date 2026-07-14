@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 import enum
-from sqlalchemy import ForeignKey, Enum, DateTime, func, UniqueConstraint, Index, BigInteger, Integer
+from sqlalchemy import ForeignKey, Enum, DateTime, func, UniqueConstraint, Index, BigInteger, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base
 
@@ -19,9 +19,11 @@ class FamilyLink(Base):
     __table_args__ = (
         UniqueConstraint("primary_nurse_id", "partner_user_id", name="uq_family_links_pair"),
         Index("idx_family_partner", "partner_user_id"),
+        Index("idx_family_links_uuid", "uuid", unique=True),
     )
 
     id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    uuid: Mapped[str] = mapped_column(String(36), unique=True, nullable=False)
     primary_nurse_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     partner_user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     status: Mapped[FamilyLinkStatus] = mapped_column(Enum(FamilyLinkStatus), default=FamilyLinkStatus.PENDING, nullable=False)
