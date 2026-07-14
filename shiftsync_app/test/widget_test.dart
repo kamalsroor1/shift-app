@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftsync_app/main.dart';
 
 void main() {
-  testWidgets('ShiftSync onboarding, login flow, interactive calendar, and EGP ledger work seamlessly', (WidgetTester tester) async {
+  testWidgets('Shiftak onboarding, login flow, interactive calendar, and EGP ledger work seamlessly with Riverpod', (WidgetTester tester) async {
     // Build our app starting from WelcomeScreen
     await tester.pumpWidget(
       const ProviderScope(
-        child: ShiftSyncApp(),
+        child: ShiftakApp(),
       ),
     );
     await tester.pumpAndSettle();

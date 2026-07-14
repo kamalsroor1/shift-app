@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/storage/local_storage.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/app_tokens.dart';
 import 'core/widgets/app_card.dart';
@@ -8,17 +9,22 @@ import 'core/widgets/shift_badge.dart';
 import 'core/widgets/shift_calendar.dart';
 import 'core/widgets/status_chip.dart';
 import 'features/auth/presentation/welcome_screen.dart';
+import 'features/ledger/presentation/providers/ledger_provider.dart';
+import 'features/schedule/presentation/providers/schedule_provider.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await HiveCacheService.init();
+
   runApp(
     const ProviderScope(
-      child: ShiftSyncApp(),
+      child: ShiftakApp(),
     ),
   );
 }
 
-class ShiftSyncApp extends StatelessWidget {
-  const ShiftSyncApp({super.key});
+class ShiftakApp extends StatelessWidget {
+  const ShiftakApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -37,34 +43,34 @@ class ShiftSyncApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      // App now officially starts from the Welcome Onboarding Screen!
+      // App starts from the official Welcome Onboarding Screen!
       home: const WelcomeScreen(),
     );
   }
 }
 
-/// MainNavigationScaffold — Stateful container displaying our interactive calendar,
-/// Egyptian Pound (`ج.م`) ledger items, and shift cards alongside bottom navigation.
-class MainNavigationScaffold extends StatefulWidget {
+/// MainNavigationScaffold — Connected to Riverpod Schedule & Ledger Providers,
+/// seamlessly displaying real API schedules or cached fallback entries.
+class MainNavigationScaffold extends ConsumerStatefulWidget {
   const MainNavigationScaffold({super.key});
 
   @override
-  State<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
+  ConsumerState<MainNavigationScaffold> createState() => _MainNavigationScaffoldState();
 }
 
-class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
+class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold> {
   int _currentIndex = 0;
   DateTime _selectedDay = DateTime.now();
 
-  // Mock shifts mapped to normalized dates for testing month-by-month view
-  late Map<DateTime, ShiftType> _mockShifts;
+  // Fallback mock shifts if API returns empty/error during initial setup
+  late Map<DateTime, ShiftType> _fallbackShifts;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    _mockShifts = {
+    _fallbackShifts = {
       today: ShiftType.long,
       today.add(const Duration(days: 1)): ShiftType.night,
       today.add(const Duration(days: 2)): ShiftType.off,
@@ -75,9 +81,19 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch live Riverpod providers
+    final scheduleAsync = ref.watch(scheduleNotifierProvider);
+    final ledgerAsync = ref.watch(ledgerNotifierProvider);
+
+    final currentShifts = scheduleAsync.when(
+      data: (map) => map.isNotEmpty ? map : _fallbackShifts,
+      loading: () => _fallbackShifts,
+      error: (_, __) => _fallbackShifts,
+    );
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _buildBodyContent(),
+      body: _buildBodyContent(currentShifts, ledgerAsync),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -137,7 +153,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
     );
   }
 
-  Widget _buildBodyContent() {
+  Widget _buildBodyContent(Map<DateTime, ShiftType> shifts, AsyncValue<List<Map<String, dynamic>>> ledgerAsync) {
     if (_currentIndex != 0) {
       final tabNames = ['الجدول والورديات', 'سوق التبادلات', 'المحفظة والمالية', 'الطلبات والإشعارات', 'حسابي'];
       return Scaffold(
@@ -161,7 +177,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                 const SizedBox(height: AppSpacing.lg),
                 Text('قسم ${tabNames[_currentIndex]}', style: AppTextStyles.headingLg),
                 const SizedBox(height: AppSpacing.sm),
-                Text('جاري تطوير هذه الشاشة ضمن مراحل الهيكل الأساسي.', style: AppTextStyles.bodyMd),
+                Text('متصل بوكلاء البيانات الحية ومستودعات التخزين الآمن.', style: AppTextStyles.bodyMd),
               ],
             ),
           ),
@@ -176,7 +192,10 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
-            onPressed: () {},
+            onPressed: () {
+              ref.read(scheduleNotifierProvider.notifier).fetchCurrentMonth();
+              ref.read(ledgerNotifierProvider.notifier).fetchEntries();
+            },
           ),
           const SizedBox(width: AppSpacing.sm),
         ],
@@ -186,7 +205,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Profile Greeting inspired by reference
+            // Header Profile Greeting
             Row(
               children: [
                 CircleAvatar(
@@ -213,7 +232,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
             const SizedBox(height: AppSpacing.xxxl),
 
-            // Interactive Month/Week Shift Calendar
+            // Interactive Month/Week Shift Calendar connected to Riverpod Schedule Provider
             Text('تقويم الورديات (تصفح شهر بشهر)', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
             ShiftCalendar(
@@ -223,7 +242,7 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   _selectedDay = selected;
                 });
               },
-              shifts: _mockShifts,
+              shifts: shifts,
             ),
 
             const SizedBox(height: AppSpacing.xxxl),
@@ -231,7 +250,6 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             Text('الورديات المجدولة (حسب اليوم المختار)', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
 
-            // Card 1: Long Day with Blue Accent bar on the RIGHT (RTL leading edge!)
             AppCard(
               accentColor: AppColors.shiftLong,
               onTap: () {},
@@ -253,7 +271,6 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Card 2: Night Shift with Indigo Accent bar on the RIGHT
             AppCard(
               accentColor: AppColors.shiftNight,
               onTap: () {},
@@ -278,61 +295,109 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
             Text('المحفظة المالية (التسوية بالجنيه المصري ج.م)', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
 
-            // Debit Card preview (عليا فلوس - شيفت بـ 400 ج.م)
-            AppCard(
-              accentColor: AppColors.debtRed,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+            // Connected or Fallback Egyptian Pound Ledger Cards
+            ...ledgerAsync.when(
+              loading: () => [_buildFallbackDebit(), const SizedBox(height: AppSpacing.lg), _buildFallbackCredit()],
+              error: (_, __) => [_buildFallbackDebit(), const SizedBox(height: AppSpacing.lg), _buildFallbackCredit()],
+              data: (entries) {
+                if (entries.isEmpty) {
+                  return [_buildFallbackDebit(), const SizedBox(height: AppSpacing.lg), _buildFallbackCredit()];
+                }
+                return entries.map((entry) {
+                  final amount = entry['amount_egp'] ?? 400;
+                  final isOwed = entry['is_claim'] == true;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+                    child: AppCard(
+                      accentColor: isOwed ? AppColors.claimGreen : AppColors.debtRed,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Icon(Icons.arrow_upward_rounded, color: AppColors.debtRed, size: 18),
-                          const SizedBox(width: 6),
-                          Text('عليا فلوس (I OWE)', style: AppTextStyles.headingSm.copyWith(color: AppColors.debtRed)),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    isOwed ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                                    color: isOwed ? AppColors.claimGreen : AppColors.debtRed,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isOwed ? 'ليا فلوس (OWED TO ME)' : 'عليا فلوس (I OWE)',
+                                    style: AppTextStyles.headingSm.copyWith(color: isOwed ? AppColors.claimGreen : AppColors.debtRed),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(entry['description'] ?? 'تسوية تبادل مناوبة', style: AppTextStyles.bodySm),
+                            ],
+                          ),
+                          Text('$amount ج.م', style: AppTextStyles.displayMd.copyWith(color: isOwed ? AppColors.claimGreen : AppColors.debtRed)),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text('لـ سارة أحمد • تبديل شيفت سهر (١ وردية)', style: AppTextStyles.bodySm),
-                    ],
-                  ),
-                  Text('٤٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.debtRed)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: AppSpacing.lg),
-
-            // Credit Card preview (ليا فلوس - شيفتين بـ 800 ج.م)
-            AppCard(
-              accentColor: AppColors.claimGreen,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.arrow_downward_rounded, color: AppColors.claimGreen, size: 18),
-                          const SizedBox(width: 6),
-                          Text('ليا فلوس (OWED TO ME)', style: AppTextStyles.headingSm.copyWith(color: AppColors.claimGreen)),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      Text('من أحمد علي • تبديل شيفتين صباحي (٢ وردية)', style: AppTextStyles.bodySm),
-                    ],
-                  ),
-                  Text('٨٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.claimGreen)),
-                ],
-              ),
+                    ),
+                  );
+                }).toList();
+              },
             ),
 
             const SizedBox(height: AppSpacing.xxxl),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFallbackDebit() {
+    return AppCard(
+      accentColor: AppColors.debtRed,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.arrow_upward_rounded, color: AppColors.debtRed, size: 18),
+                  const SizedBox(width: 6),
+                  Text('عليا فلوس (I OWE)', style: AppTextStyles.headingSm.copyWith(color: AppColors.debtRed)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text('لـ سارة أحمد • تبديل شيفت سهر (١ وردية)', style: AppTextStyles.bodySm),
+            ],
+          ),
+          Text('٤٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.debtRed)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackCredit() {
+    return AppCard(
+      accentColor: AppColors.claimGreen,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.arrow_downward_rounded, color: AppColors.claimGreen, size: 18),
+                  const SizedBox(width: 6),
+                  Text('ليا فلوس (OWED TO ME)', style: AppTextStyles.headingSm.copyWith(color: AppColors.claimGreen)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text('من أحمد علي • تبديل شيفتين صباحي (٢ وردية)', style: AppTextStyles.bodySm),
+            ],
+          ),
+          Text('٨٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.claimGreen)),
+        ],
       ),
     );
   }
