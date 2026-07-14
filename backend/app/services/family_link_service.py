@@ -56,14 +56,27 @@ class FamilyLinkService:
         check_stmt = select(FamilyLink).where(
             (FamilyLink.primary_nurse_id == nurse.id)
             & (FamilyLink.partner_user_id == partner.id)
-            & (FamilyLink.status != FamilyLinkStatus.REVOKED)
         )
         existing = await db.scalar(check_stmt)
         if existing:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="An active or pending family link already exists between these accounts"
-            )
+            if existing.status != FamilyLinkStatus.REVOKED:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="An active or pending family link already exists between these accounts"
+                )
+            else:
+                existing.status = FamilyLinkStatus.PENDING
+                existing.uuid = str(uuid.uuid4())
+                existing.linked_at = None
+                existing.created_at = datetime.now()
+                await db.commit()
+                
+                reload_stmt = (
+                    select(FamilyLink)
+                    .options(selectinload(FamilyLink.primary_nurse), selectinload(FamilyLink.partner_user))
+                    .where(FamilyLink.id == existing.id)
+                )
+                return await db.scalar(reload_stmt)
 
         new_uuid = str(uuid.uuid4())
         link = FamilyLink(

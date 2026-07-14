@@ -83,3 +83,10 @@ async def test_family_link_lifecycle(async_client: AsyncClient, setup_family_use
     revoke_res = await async_client.delete(f"/api/v1/family-links/{link_uuid}", headers=nurse_headers)
     assert revoke_res.status_code == 200
     assert revoke_res.json()["status"] == "REVOKED"
+
+    # 5. Nurse re-initiates the family link (tests reuse of revoked row to bypass database unique constraint)
+    reinit_res = await async_client.post("/api/v1/family-links", json=init_payload, headers=nurse_headers)
+    assert reinit_res.status_code == 201
+    reinit_data = reinit_res.json()
+    assert reinit_data["status"] == "PENDING"
+    assert reinit_data["uuid"] != link_uuid  # UUID should be regenerated
