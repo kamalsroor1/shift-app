@@ -39,6 +39,11 @@ async def lifespan(app: FastAPI):
                     first_dept = existing
             await db.commit()
 
+            # If all departments were already seeded, first_dept may still be None.
+            # Fallback: fetch the first available department from the database.
+            if not first_dept:
+                first_dept = await db.scalar(select(Department).limit(1))
+
             admin_phone = "07800000000"
             stmt_admin = select(User).where(User.phone == admin_phone)
             existing_admin = await db.scalar(stmt_admin)
@@ -62,7 +67,8 @@ async def lifespan(app: FastAPI):
                 await db.commit()
     except Exception as e:
         # Ignore seeding error if database table is not yet migrated
-        pass
+        import logging
+        logging.getLogger(__name__).warning(f"[Lifespan Seed] Error: {e}")
     yield
 
 app = FastAPI(

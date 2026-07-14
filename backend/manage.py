@@ -177,7 +177,11 @@ def seed_database():
 
             await db.commit()
 
-            # 2. Ensure default admin user exists
+            # Fallback: if all departments already existed, first_dept may still be None
+            if not first_dept:
+                first_dept = await db.scalar(select(Department).limit(1))
+
+            # 2. Ensure default admin user exists (self-healing)
             admin_phone = "07800000000"
             stmt_admin = select(User).where(User.phone == admin_phone)
             existing_admin = await db.scalar(stmt_admin)
@@ -195,8 +199,12 @@ def seed_database():
                 db.add(admin_user)
                 await db.commit()
                 console.print(f"  + Created default Admin User -> Phone: [bold yellow]{admin_phone}[/bold yellow], Password: [bold yellow]AdminSecret123![/bold yellow]")
-            else:
-                console.print(f"  * Admin user ({admin_phone}) already exists.")
+            elif existing_admin:
+                existing_admin.password = get_password_hash("AdminSecret123!")
+                existing_admin.role = UserRole.ADMIN
+                existing_admin.deleted_at = None
+                await db.commit()
+                console.print(f"  * Admin user ({admin_phone}) credentials synchronized.")
 
     asyncio.run(_seed_async())
     console.print("[bold green][SUCCESS] Database seeding complete![/bold green]")
