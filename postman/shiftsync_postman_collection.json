@@ -45,7 +45,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Nurse Clara test\",\n  \"employee_id\": \"EMP-N101\",\n  \"phone\": \"{{nurse_phone}}\",\n  \"password\": \"password123\",\n  \"role\": \"nurse\",\n  \"department_code\": \"ICU\"\n}"
+              "raw": "{\n  \"full_name\": \"Nurse Clara test\",\n  \"employee_id\": \"EMP-N101\",\n  \"phone\": \"{{nurse_phone}}\",\n  \"password\": \"password123\",\n  \"role\": \"nurse\",\n  \"department_code\": \"ICU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -86,7 +91,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Partner David test\",\n  \"employee_id\": \"EMP-P101\",\n  \"phone\": \"{{partner_phone}}\",\n  \"password\": \"password123\",\n  \"role\": \"partner\",\n  \"department_code\": \"ICU\"\n}"
+              "raw": "{\n  \"full_name\": \"Partner David test\",\n  \"employee_id\": \"EMP-P101\",\n  \"phone\": \"{{partner_phone}}\",\n  \"password\": \"password123\",\n  \"role\": \"partner\",\n  \"department_code\": \"ICU\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/register",
@@ -140,7 +150,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_or_employee_id\": \"{{nurse_phone}}\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"phone_or_employee_id\": \"{{nurse_phone}}\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
@@ -188,7 +203,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_or_employee_id\": \"{{admin_phone}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+              "raw": "{\n  \"phone_or_employee_id\": \"{{admin_phone}}\",\n  \"password\": \"{{admin_password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
@@ -236,7 +256,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"phone_or_employee_id\": \"{{partner_phone}}\",\n  \"password\": \"password123\"\n}"
+              "raw": "{\n  \"phone_or_employee_id\": \"{{partner_phone}}\",\n  \"password\": \"password123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/login",
@@ -342,7 +367,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/auth/refresh",
@@ -502,7 +532,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Cardiology Department\",\n  \"code\": \"CARDIO_01\",\n  \"monthly_target_hours\": 175\n}"
+              "raw": "{\n  \"name\": \"Cardiology Department\",\n  \"code\": \"CARDIO_01\",\n  \"monthly_target_hours\": 175\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/departments",
@@ -552,7 +587,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"monthly_target_hours\": 165\n}"
+              "raw": "{\n  \"monthly_target_hours\": 165\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/departments/{{department_uuid}}",
@@ -618,7 +658,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"partner_phone\": \"{{partner_phone}}\"\n}"
+              "raw": "{\n  \"partner_phone\": \"{{partner_phone}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": {
               "raw": "{{base_url}}/api/v1/family-links",
