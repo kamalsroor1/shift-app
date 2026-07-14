@@ -16,12 +16,12 @@ async def get_login_credentials(request: Request) -> tuple[str, str]:
             body = await request.json()
         except Exception:
             body = {}
-        phone_or_emp_id = body.get("phone_or_employee_id") or body.get("username")
+        phone_or_emp_id = body.get("phone_or_employee_id") or body.get("username") or body.get("phone")
         password = body.get("password")
     else:
         try:
             form = await request.form()
-            phone_or_emp_id = form.get("username") or form.get("phone_or_employee_id")
+            phone_or_emp_id = form.get("username") or form.get("phone_or_employee_id") or form.get("phone")
             password = form.get("password")
         except Exception:
             phone_or_emp_id = None
