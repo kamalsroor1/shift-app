@@ -5,7 +5,9 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/app_tokens.dart';
 import 'core/widgets/app_card.dart';
 import 'core/widgets/shift_badge.dart';
+import 'core/widgets/shift_calendar.dart';
 import 'core/widgets/status_chip.dart';
+import 'features/auth/presentation/welcome_screen.dart';
 
 void main() {
   runApp(
@@ -35,13 +37,14 @@ class ShiftSyncApp extends StatelessWidget {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      home: const MainNavigationScaffold(),
+      // App now officially starts from the Welcome Onboarding Screen!
+      home: const WelcomeScreen(),
     );
   }
 }
 
-/// MainNavigationScaffold — Stateful container displaying our Arabic Token Demo Screen
-/// alongside the official ShiftSync bottom navigation bar.
+/// MainNavigationScaffold — Stateful container displaying our interactive calendar,
+/// Egyptian Pound (`ج.م`) ledger items, and shift cards alongside bottom navigation.
 class MainNavigationScaffold extends StatefulWidget {
   const MainNavigationScaffold({super.key});
 
@@ -51,6 +54,24 @@ class MainNavigationScaffold extends StatefulWidget {
 
 class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   int _currentIndex = 0;
+  DateTime _selectedDay = DateTime.now();
+
+  // Mock shifts mapped to normalized dates for testing month-by-month view
+  late Map<DateTime, ShiftType> _mockShifts;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    _mockShifts = {
+      today: ShiftType.long,
+      today.add(const Duration(days: 1)): ShiftType.night,
+      today.add(const Duration(days: 2)): ShiftType.off,
+      today.add(const Duration(days: 4)): ShiftType.long,
+      today.add(const Duration(days: 6)): ShiftType.night,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -117,7 +138,6 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
   }
 
   Widget _buildBodyContent() {
-    // Show main showcase screen on index 0, placeholder for other tabs showing immediate reaction
     if (_currentIndex != 0) {
       final tabNames = ['الجدول والورديات', 'سوق التبادلات', 'المحفظة والمالية', 'الطلبات والإشعارات', 'حسابي'];
       return Scaffold(
@@ -191,9 +211,24 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
               ],
             ),
 
-            const SizedBox(width: double.infinity, height: AppSpacing.xxxl),
+            const SizedBox(height: AppSpacing.xxxl),
 
-            Text('الورديات القادمة هذا الأسبوع', style: AppTextStyles.label),
+            // Interactive Month/Week Shift Calendar
+            Text('تقويم الورديات (تصفح شهر بشهر)', style: AppTextStyles.label),
+            const SizedBox(height: AppSpacing.md),
+            ShiftCalendar(
+              selectedDay: _selectedDay,
+              onDaySelected: (selected, focused) {
+                setState(() {
+                  _selectedDay = selected;
+                });
+              },
+              shifts: _mockShifts,
+            ),
+
+            const SizedBox(height: AppSpacing.xxxl),
+
+            Text('الورديات المجدولة (حسب اليوم المختار)', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
 
             // Card 1: Long Day with Blue Accent bar on the RIGHT (RTL leading edge!)
@@ -206,9 +241,9 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('غداً • الأربعاء ١٥ يوليو', style: AppTextStyles.headingMd),
+                      Text('وردية اليوم المختار • ١٢ ساعة', style: AppTextStyles.headingMd),
                       const SizedBox(height: AppSpacing.xs),
-                      Text('٠٧:٣٠ صباحاً – ٠٧:٣٠ مساءً (١٢ ساعة)', style: AppTextStyles.bodySm),
+                      Text('٠٧:٣٠ صباحاً – ٠٧:٣٠ مساءً', style: AppTextStyles.bodySm),
                     ],
                   ),
                   const ShiftBadge(shiftType: ShiftType.long),
@@ -228,9 +263,9 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('الخميس • ١٦ يوليو', style: AppTextStyles.headingMd),
+                      Text('المناوبة التالية • سهر ليلي', style: AppTextStyles.headingMd),
                       const SizedBox(height: AppSpacing.xs),
-                      Text('٠٧:٣٠ مساءً – ٠٧:٣٠ صباحاً (سهر)', style: AppTextStyles.bodySm),
+                      Text('٠٧:٣٠ مساءً – ٠٧:٣٠ صباحاً', style: AppTextStyles.bodySm),
                     ],
                   ),
                   const ShiftBadge(shiftType: ShiftType.night),
@@ -238,33 +273,12 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
               ),
             ),
 
-            const SizedBox(height: AppSpacing.lg),
-
-            // Card 3: Day Off with Slate Accent bar on the RIGHT
-            AppCard(
-              accentColor: AppColors.shiftOff,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('الجمعة • ١٧ يوليو', style: AppTextStyles.headingMd),
-                      const SizedBox(height: AppSpacing.xs),
-                      Text('يوم راحة مستحقة', style: AppTextStyles.bodySm),
-                    ],
-                  ),
-                  const ShiftBadge(shiftType: ShiftType.off),
-                ],
-              ),
-            ),
-
             const SizedBox(height: AppSpacing.xxxl),
 
-            Text('المحفظة المالية وسجل المداولات', style: AppTextStyles.label),
+            Text('المحفظة المالية (التسوية بالجنيه المصري ج.م)', style: AppTextStyles.label),
             const SizedBox(height: AppSpacing.md),
 
-            // Debit Card preview (عليا فلوس)
+            // Debit Card preview (عليا فلوس - شيفت بـ 400 ج.م)
             AppCard(
               accentColor: AppColors.debtRed,
               child: Row(
@@ -281,17 +295,17 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('لـ سارة أحمد • تبديل مناوبة سهر', style: AppTextStyles.bodySm),
+                      Text('لـ سارة أحمد • تبديل شيفت سهر (١ وردية)', style: AppTextStyles.bodySm),
                     ],
                   ),
-                  Text('٢٥,٠٠٠ دينار', style: AppTextStyles.displayMd.copyWith(color: AppColors.debtRed)),
+                  Text('٤٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.debtRed)),
                 ],
               ),
             ),
 
             const SizedBox(height: AppSpacing.lg),
 
-            // Credit Card preview (ليا فلوس)
+            // Credit Card preview (ليا فلوس - شيفتين بـ 800 ج.م)
             AppCard(
               accentColor: AppColors.claimGreen,
               child: Row(
@@ -308,10 +322,10 @@ class _MainNavigationScaffoldState extends State<MainNavigationScaffold> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text('من أحمد علي • مناوبة صباحية طويلة', style: AppTextStyles.bodySm),
+                      Text('من أحمد علي • تبديل شيفتين صباحي (٢ وردية)', style: AppTextStyles.bodySm),
                     ],
                   ),
-                  Text('٣٠,٠٠٠ دينار', style: AppTextStyles.displayMd.copyWith(color: AppColors.claimGreen)),
+                  Text('٨٠٠ ج.م', style: AppTextStyles.displayMd.copyWith(color: AppColors.claimGreen)),
                 ],
               ),
             ),

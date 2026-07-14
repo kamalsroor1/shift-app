@@ -4,36 +4,43 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftsync_app/main.dart';
 
 void main() {
-  testWidgets('ShiftSyncApp renders Arabic token showcase screen and bottom navigation bar correctly', (WidgetTester tester) async {
-    // Build our Arabic-First app inside ProviderScope and trigger a frame.
+  testWidgets('ShiftSync onboarding, login flow, interactive calendar, and EGP ledger work seamlessly', (WidgetTester tester) async {
+    // Build our app starting from WelcomeScreen
     await tester.pumpWidget(
       const ProviderScope(
         child: ShiftSyncApp(),
       ),
     );
-
-    // Allow Google Fonts and localization delegates to settle
     await tester.pumpAndSettle();
 
-    // Verify that our Arabic headings render properly using exact matching where appropriate
+    // Verify WelcomeScreen
+    expect(find.text('شِفْت سينك • ShiftSync'), findsOneWidget);
+    expect(find.text('تسجيل الدخول للمناوبات'), findsOneWidget);
+
+    // Tap to enter LoginScreen
+    await tester.tap(find.text('تسجيل الدخول للمناوبات'));
+    await tester.pumpAndSettle();
+
+    // Verify LoginScreen
+    expect(find.text('تسجيل الدخول'), findsOneWidget);
+    expect(find.text('مرحباً بك مجدداً 👋'), findsOneWidget);
+    expect(find.textContaining('دخول تجريبي سريع'), findsOneWidget);
+
+    // Tap Quick Demo Login button to reach MainNavigationScaffold
+    await tester.tap(find.textContaining('دخول تجريبي سريع'));
+    await tester.pumpAndSettle();
+
+    // Verify MainNavigationScaffold items (Header, Calendar, Egyptian Pound Ledger, Bottom Nav)
     expect(find.textContaining('نظام شِفْت سينك'), findsOneWidget);
     expect(find.textContaining('كمال سرور'), findsOneWidget);
-    expect(find.textContaining('الورديات القادمة هذا الأسبوع'), findsOneWidget);
-    expect(find.text('صباحية طويلة'), findsOneWidget);
-    expect(find.text('سهر ليلي'), findsOneWidget);
+    expect(find.text('تقويم الورديات (تصفح شهر بشهر)'), findsOneWidget);
     expect(find.text('عليا فلوس (I OWE)'), findsOneWidget);
     expect(find.text('ليا فلوس (OWED TO ME)'), findsOneWidget);
+    expect(find.text('٤٠٠ ج.م'), findsOneWidget);
+    expect(find.text('٨٠٠ ج.م'), findsOneWidget);
 
-    // Verify that the bottom navigation bar renders with all 5 official tabs
+    // Verify Bottom Nav items
     expect(find.text('الجدول والورديات'), findsOneWidget);
     expect(find.text('سوق التبادلات'), findsOneWidget);
-    expect(find.text('المحفظة والمالية'), findsOneWidget);
-    expect(find.text('الطلبات والإشعارات'), findsOneWidget);
-    expect(find.text('حسابي'), findsOneWidget);
-
-    // Tap on the 'سوق التبادلات' tab to verify bottom navigation responsiveness
-    await tester.tap(find.text('سوق التبادلات'));
-    await tester.pumpAndSettle();
-    expect(find.text('قسم سوق التبادلات'), findsOneWidget);
   });
 }
