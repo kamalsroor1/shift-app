@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../../../main.dart';
+import '../../../../core/navigation/main_navigation_scaffold.dart';
 import '../domain/repositories/auth_repository.dart';
 
 /// LoginScreen — Professional Arabic medical personnel authentication screen
