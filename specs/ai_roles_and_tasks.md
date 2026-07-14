@@ -664,3 +664,271 @@ When one agent produces an artifact that another depends on:
 3. **QA → All**: Coverage reports published to `docs/test_coverage_report.md`. Blocks next phase if gates are not met.
 
 4. **Conflict Resolution**: If any agent detects a spec ambiguity, it raises an `OPEN_QUESTION` comment in the relevant spec file and pauses the task until the project owner resolves it.
+
+---
+
+## Part 5: Known Bugs Fixed, Root Causes & Mandatory Rules for Future Agents
+
+> [!IMPORTANT]
+> Every agent that touches the backend or Postman collection **MUST** read this section before starting work.
+> These are real production bugs that were discovered and fixed — violating these rules will reintroduce them.
+
+---
+
+### BUG-001: Admin User Never Seeded When All Departments Already Exist
+
+**File:** `backend/app/main.py` → `lifespan()` | `backend/manage.py` → `db:seed`
+
+**Root Cause:**
+The seeding loop builds a `first_dept` variable to use as the admin's department.
+It only gets assigned during the loop **if a new department is created or found for the first time**.
+When the server restarts and all 4 departments already exist, `first_dept` can stay `None`
+if the loop logic short-circuits — causing the admin user to never be created or updated.
+The `except Exception: pass` block silently swallowed the failure.
+
+**Fix Applied:**
+```python
+# After the departments loop, always add this fallback:
+if not first_dept:
+    first_dept = await db.scalar(select(Department).limit(1))
+```
+
+**Self-Healing Rule:**
+The admin seeding block MUST also handle the case where the admin already exists
+by **resetting the password, role, and deleted_at** on every startup:
+```python
+elif existing_admin:
+    existing_admin.password = get_password_hash("AdminSecret123!")
+    existing_admin.role = UserRole.ADMIN
+    existing_admin.deleted_at = None
+    await db.commit()
+```
+
+**Never use `except Exception: pass` in seeding code.** Always log:
+```python
+except Exception as e:
+    logging.getLogger(__name__).warning(f"[Lifespan Seed] Error: {e}")
+```
+
+**Symptom If Broken:** `POST /api/v1/auth/login` with admin credentials returns `401 Incorrect credentials`
+
+**Quick Fix:** Run `python manage.py db:seed` to force re-seed.
+
+---
+
+### BUG-002: `LookupError: 'nurse' is not among defined enum values` on MySQL
+
+**File:** `backend/app/models/user.py`
+
+**Root Cause:**
+SQLAlchemy's `Enum(UserRole)` on MySQL uses **member names** (`NURSE`, `PARTNER`, `ADMIN`) as the
+valid values for the MySQL ENUM column, but the Python enum stores **values** (`nurse`, `partner`, `admin`).
+When SQLAlchemy tries to map a row from MySQL back to Python, it compares the stored string `'nurse'`
+against `['NURSE', 'PARTNER', 'ADMIN']` and raises `LookupError`.
+This does **not** appear in SQLite (used in tests) — only in MySQL (used in production/local server).
+
+**Fix Applied:**
+```python
+role: Mapped[UserRole] = mapped_column(
+    Enum(UserRole, values_callable=lambda obj: [e.value for e in obj]),
+    default=UserRole.NURSE,
+    nullable=False
+)
+```
+
+**Rule for Future Agents:**
+Any `Enum` column on a model that uses a Python `str, enum.Enum` class with lowercase values
+**MUST** include `values_callable=lambda obj: [e.value for e in obj]` to ensure MySQL compatibility.
+
+**Symptom If Broken:** `POST /api/v1/auth/register` returns `500 Internal Server Error`
+with `LookupError: 'nurse' is not among the defined enum values` in the server logs.
+
+---
+
+### BUG-003: `IntegrityError` on Family Link Re-Initiation After Revocation
+
+**File:** `backend/app/services/family_link_service.py` → `initiate_link()`
+
+**Root Cause:**
+The `family_links` table has a `UniqueConstraint("primary_nurse_id", "partner_user_id", name="uq_family_links_pair")`.
+When a nurse revokes a link and then tries to initiate a new one with the same partner,
+the old row still exists (with `status=REVOKED`).
+Attempting to `INSERT` a new row for the same pair violates the unique constraint and raises
+`sqlalchemy.exc.IntegrityError`, which is **not caught** → becomes `500 Internal Server Error`.
+
+**Fix Applied:**
+Instead of inserting a new row, **reuse and reset the existing revoked row**:
+```python
+check_stmt = select(FamilyLink).where(
+    (FamilyLink.primary_nurse_id == nurse.id) & (FamilyLink.partner_user_id == partner.id)
+)
+existing = await db.scalar(check_stmt)
+if existing:
+    if existing.status != FamilyLinkStatus.REVOKED:
+        raise HTTPException(status_code=409, detail="An active or pending family link already exists")
+    else:
+        # Reuse the row — reset status, generate new UUID
+        existing.status = FamilyLinkStatus.PENDING
+        existing.uuid = str(uuid.uuid4())
+        existing.linked_at = None
+        existing.created_at = datetime.now()
+        await db.commit()
+        return ...
+```
+
+**Rule for Future Agents:**
+Any service that creates rows in tables with composite unique constraints
+**MUST** check for existing rows first (including soft-deleted or revoked ones)
+and **reuse/update** them rather than blindly inserting.
+
+**Symptom If Broken:** `POST /api/v1/family-links` returns `500 Internal Server Error`
+after a previous link between the same nurse+partner was revoked.
+
+---
+
+### RULE-001: Postman Collection — Mandatory Role-Isolated JWT Tokens
+
+**File:** `postman/shiftsync_postman_collection.json` | `postman/shiftsync_postman_environment.json`
+
+**Problem:**
+Using a single shared `access_token` variable across all requests in the collection
+causes token overwriting between roles. When Admin login runs after Nurse login,
+the admin token overwrites `access_token`. If admin login then fails,
+all downstream admin-protected requests run with the nurse's token and return `403 Forbidden`.
+
+**Mandatory Pattern — 3 Separate Token Variables:**
+
+| Variable Name | Set By | Used By |
+|---|---|---|
+| `nurse_access_token` | Login as Nurse test script | `/me`, `/family-links`, nurse-only endpoints |
+| `admin_access_token` | Login as Admin test script | `POST /departments`, `PATCH /departments/*` |
+| `partner_access_token` | Login as Partner test script | `PATCH /family-links/{uuid}/accept` |
+
+**Login Test Script Template:**
+```javascript
+// Login as Nurse
+var json = pm.response.json();
+if (json.access_token) {
+    pm.environment.set("nurse_access_token", json.access_token);
+    pm.environment.set("access_token", json.access_token); // fallback compat
+}
+```
+
+**Request Auth Header Template:**
+```text
+// For nurse-only endpoints:
+Authorization: Bearer {{nurse_access_token}}
+
+// For admin-only endpoints:
+Authorization: Bearer {{admin_access_token}}
+
+// For partner-only endpoints:
+Authorization: Bearer {{partner_access_token}}
+```
+
+**Rule:**
+Every new endpoint added to the Postman collection MUST specify which role token it uses
+in its `auth.bearer` block. **Never use a generic `{{access_token}}` for role-protected endpoints.**
+
+---
+
+### RULE-002: Postman Collection — link_uuid Must Be Saved from Create Response
+
+**Problem:**
+If the family-link initiation request fails or is skipped, `link_uuid` stays empty.
+The Accept and Revoke requests then construct URLs like `/api/v1/family-links//accept`
+which returns `404 Not Found` or `405 Method Not Allowed`.
+
+**Mandatory Pattern:**
+```javascript
+// In the "Initiate Family Link" test script:
+if (pm.response.code === 201) {
+    var json = pm.response.json();
+    pm.environment.set("link_uuid", json.uuid);
+}
+```
+
+**Accept/Revoke URLs must be:**
+```
+PATCH {{base_url}}/api/v1/family-links/{{link_uuid}}/accept
+DELETE {{base_url}}/api/v1/family-links/{{link_uuid}}
+```
+
+---
+
+### RULE-003: Postman Body Mode Must Always Include JSON Language Metadata
+
+**Problem:**
+In some Postman versions/runners, a `"mode": "raw"` body without
+`"options": {"raw": {"language": "json"}}` causes the request body to be dropped silently,
+resulting in `422 Unprocessable Entity` or `500 Internal Server Error`.
+
+**Mandatory Pattern for every request body:**
+```json
+"body": {
+    "mode": "raw",
+    "raw": "{ ... }",
+    "options": {
+        "raw": {
+            "language": "json"
+        }
+    }
+}
+```
+
+---
+
+### RULE-004: Postman Refresh Token Flow
+
+**Important API Contract:**
+The `POST /api/v1/auth/refresh` endpoint does **NOT** accept a `refresh_token` in the request body.
+It uses the existing **access token** passed as `Authorization: Bearer {{nurse_access_token}}`.
+It re-issues a new access token for the same user.
+
+**Correct refresh request:**
+```
+POST /api/v1/auth/refresh
+Authorization: Bearer {{nurse_access_token}}
+Body: {} (empty)
+```
+
+**DO NOT** expect a `refresh_token` field in the login response — the API does not return one.
+
+---
+
+### RULE-005: Admin Credentials Are Fixed
+
+The system admin account is always seeded with these credentials. **Do not change them** in tests or environments:
+
+| Field | Value |
+|---|---|
+| Phone (`admin_phone`) | `07800000000` |
+| Password (`admin_password`) | `AdminSecret123!` |
+| Employee ID | `ADM-001` |
+| Role | `admin` |
+| UUID | `user-super-admin-01` |
+
+If admin login fails with `401`, run:
+```powershell
+python manage.py db:seed
+```
+Then restart the server. The `lifespan()` on startup will also self-heal the admin account.
+
+---
+
+### RULE-006: Tests Must Pass Before Git Push
+
+**Non-negotiable rule:**
+`python manage.py test` must return `[SUCCESS] All test suites passed successfully!`
+before any commit is pushed to `main`. This applies to:
+
+- Any change to `app/models/`
+- Any change to `app/services/`
+- Any change to `app/api/`
+- Any change to `app/main.py`
+- Any new migration in `alembic/versions/`
+
+If a bug only manifests on MySQL (not SQLite used in tests),
+a **diagnostic scratch script** must be written and run against the local MySQL database
+to confirm the fix before pushing.
+
