@@ -61,7 +61,12 @@ Tasks within the same phase may be parallelized where dependencies allow.
 | 1 | All Alembic migrations run cleanly; `alembic upgrade head` succeeds |
 | 2 | Auth endpoints (`/api/v1/auth/*`) tested; family-link flow validated; department CRUD complete |
 | 3 | Swap + Sale state machines pass all edge-case tests; ledger double-entry verified |
-| 1–3 | OpenAPI (`/openapi.json`) cleanly generated and exported to `docs/openapi.json` |
+| 4 | Flutter Arabic-First RTL UI (Tokens, Welcome, Login, Interactive Calendar, EGP Ledger Cards) |
+| 5 | Live API integration with Dio/Riverpod; real-time schedule & wallet updates |
+| 6 | Real-Time WebSockets & FCM Push Notifications broadcasting swap/settlement events instantly |
+| 7 | Admin Web Dashboard (ICU head management, complex swap approvals, and EGP financial audits) |
+| 8 | Production Dockerization, GitHub Actions CI/CD Pipeline, and Cloud Deployment Readiness |
+| 1–8 | OpenAPI (`/openapi.json`) and full UI documentation cleanly exported and verified |
 
 ---
 
@@ -148,8 +153,11 @@ lib/
 | After Phase 1 | DB constraints verified by Alembic migration tests |
 | After Phase 2 | 80% coverage on Auth + Department service logic |
 | After Phase 3 | 100% coverage of Swap state machine transitions; 100% of ledger double-entry |
-| After Phase 4 | 70% Flutter widget test coverage on core components |
+| After Phase 4 | 70% Flutter widget test coverage on core Arabic RTL components & calendar |
 | After Phase 5 | End-to-end integration tests pass for: login → schedule → post sale → purchase → settle |
+| After Phase 6 | WebSocket reconnection resilience & FCM mock notification broadcast verified |
+| After Phase 7 | Admin Web Dashboard RBAC permissions & audit report generation tested |
+| After Phase 8 | Production Docker container spin-up & CI/CD pipeline pass on clean runners |
 
 ---
 
@@ -616,6 +624,118 @@ lib/
 
 ---
 
+### Phase 6: Real-Time WebSockets & Push Notifications
+
+**TASK-031** — `@backend-architect`  
+**Title:** Enhance WebSocket manager & implement FCM Push Notification broadcasting  
+**Depends on:** TASK-017, TASK-028  
+**Steps:**
+1. Upgrade `WebSocketManager` in `app/services/websocket.py` with automatic reconnection handling and room isolation per department/ICU unit.
+2. Integrate Firebase Cloud Messaging (FCM) admin SDK or HTTP v1 API to broadcast push alerts (`swap_requested`, `swap_accepted`, `debt_settled_egp`).
+3. Ensure exact Egyptian Pound (`ج.م`) financial values are payload-embedded in push notifications.
+
+**AC:** WebSocket channels withstand network drops; FCM notifications deliver under 1 second to offline medical staff.
+
+---
+
+**TASK-032** — `@flutter-agent`  
+**Title:** Implement WebSocket Stream Manager & Background FCM Client in Flutter  
+**Depends on:** TASK-031, TASK-027  
+**Steps:**
+1. Create `WebSocketStreamManager` provider in Riverpod with exponential backoff retry.
+2. Connect the 4th Bottom Navigation tab (`الطلبات والإشعارات`) directly to live real-time streams and local notifications (`flutter_local_notifications`).
+3. Render interactive push alerts allowing instant approval/rejection of shift swaps from the lock screen.
+
+**AC:** Notifications tab updates instantly without refreshing; push alerts show clear Arabic medical copy and EGP amounts.
+
+---
+
+**TASK-033** — `@qa-agent`  
+**Title:** Phase 6 Real-time resilience & notification delivery suite  
+**Depends on:** TASK-032  
+**Steps:**
+1. Simulate network disconnects and assert automatic WebSocket re-subscription without data loss.
+2. Validate mock FCM push delivery for cross-department shift swap attempts.
+
+**AC:** Pytest and Flutter stream tests pass with 100% reliability.
+
+---
+
+### Phase 7: Admin Web Dashboard & Hospital Management
+
+**TASK-034** — `@flutter-agent`  
+**Title:** Build Admin Web Dashboard for ICU Heads (`Flutter Web`)  
+**Depends on:** TASK-029, TASK-031  
+**Steps:**
+1. Create dedicated responsive Web layouts (`MainNavigationScaffold` expanded side-nav for desktop).
+2. Implement Department Schedule Grid allowing head nurses to oversee all staff rosters simultaneously.
+3. Build EGP Financial Ledger Audit screen to review total hospital shift exchange debts and settlement history.
+
+**AC:** Admin dashboard renders cleanly on desktop browsers (`Microsoft Edge / Chrome`) with full Arabic right-to-left layout.
+
+---
+
+**TASK-035** — `@backend-architect`  
+**Title:** Implement Admin Audit Logs & Comprehensive Analytics APIs  
+**Depends on:** TASK-034  
+**Steps:**
+1. Create `/api/v1/admin/audit-logs` endpoint tracking every shift creation, swap approval, and financial settlement.
+2. Create `/api/v1/admin/analytics/egp-summary` returning aggregated debt and settlement statistics per department.
+
+**AC:** RBAC enforced strictly (`role == 'admin'`); endpoints return comprehensive analytics within 200ms.
+
+---
+
+**TASK-036** — `@qa-agent`  
+**Title:** Phase 7 Admin RBAC & Audit report validation  
+**Depends on:** TASK-035  
+**Steps:**
+1. Test role boundary: verify `nurse` token attempting to access `/api/v1/admin/*` receives immediate `403 Forbidden`.
+2. Verify analytics accuracy by generating mock transactions and validating EGP totals.
+
+**AC:** All security and analytical tests pass.
+
+---
+
+### Phase 8: Dockerization, CI/CD Pipelines & Production Deployment
+
+**TASK-037** — `@devops-agent`  
+**Title:** Production Dockerization (FastAPI, MySQL 8.0, Redis, Nginx)  
+**Depends on:** TASK-035  
+**Steps:**
+1. Create optimized multi-stage `Dockerfile` for Python backend.
+2. Create `docker-compose.prod.yml` orchestrating FastAPI, MySQL 8.0 with persistent volumes, Redis for WebSocket pub/sub, and Nginx reverse proxy with SSL termination.
+3. Include health check scripts and automated startup seeding.
+
+**AC:** `docker-compose -f docker-compose.prod.yml up -d` spins up all containers cleanly with zero errors.
+
+---
+
+**TASK-038** — `@devops-agent`  
+**Title:** GitHub Actions CI/CD Pipeline (`ci-cd.yml`)  
+**Depends on:** TASK-037  
+**Steps:**
+1. Create `.github/workflows/ci-cd.yml` running on every Push and Pull Request to `main`.
+2. Pipeline jobs:
+   - Backend Job: Setup Python, start MySQL service, run `manage.py test` (must pass 23/23 tests).
+   - Flutter Job: Setup Flutter stable, verify formatting, run `flutter test` across all widget tests.
+   - Build & Push Job: Build Docker images and tag with Git SHA upon successful merge.
+
+**AC:** Pipeline runs automatically and blocks PR merges if any unit or widget test fails.
+
+---
+
+**TASK-039** — `@qa-agent` & `@devops-agent`  
+**Title:** Production Readiness Audit & Smoke Testing  
+**Depends on:** TASK-038  
+**Steps:**
+1. Execute full end-to-end smoke test against the Docker production environment.
+2. Verify database backup and restore scripts.
+
+**AC:** Production environment certified ready for live hospital deployment.
+
+---
+
 ## Part 3: Task Summary Index
 
 | Task | Agent | Phase | Title |
@@ -650,6 +770,15 @@ lib/
 | TASK-028 | Flutter | 5 | Ledger API integration + WebSocket |
 | TASK-029 | Flutter | 5 | Dashboard live data + notifications |
 | TASK-030 | QA | 5 | End-to-end integration tests |
+| TASK-031 | Backend | 6 | Enhance WebSocket manager & FCM Push broadcasting |
+| TASK-032 | Flutter | 6 | WebSocket Stream Manager & FCM Client in Flutter |
+| TASK-033 | QA | 6 | Phase 6 Real-time resilience & notification suite |
+| TASK-034 | Flutter | 7 | Admin Web Dashboard for ICU Heads (`Flutter Web`) |
+| TASK-035 | Backend | 7 | Admin Audit Logs & Comprehensive Analytics APIs |
+| TASK-036 | QA | 7 | Phase 7 Admin RBAC & Audit report validation |
+| TASK-037 | DevOps | 8 | Production Dockerization (FastAPI, MySQL, Redis, Nginx) |
+| TASK-038 | DevOps | 8 | GitHub Actions CI/CD Pipeline (`ci-cd.yml`) |
+| TASK-039 | QA/DevOps | 8 | Production Readiness Audit & Smoke Testing |
 
 ---
 
