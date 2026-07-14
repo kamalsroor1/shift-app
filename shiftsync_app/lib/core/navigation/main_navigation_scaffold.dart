@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
+import '../theme/theme_provider.dart';
 import '../widgets/app_card.dart';
 import '../widgets/shift_badge.dart';
 import '../widgets/shift_calendar.dart';
@@ -109,11 +111,11 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       body: _buildBodyContent(currentShifts, ledgerAsync),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.cardSurface,
           boxShadow: [
             BoxShadow(
               color: const Color(0x0A000000),
@@ -127,7 +129,7 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
             currentIndex: _currentIndex,
             onTap: (index) => setState(() => _currentIndex = index),
             type: BottomNavigationBarType.fixed,
-            backgroundColor: AppColors.surface,
+            backgroundColor: context.cardSurface,
             elevation: 0,
             selectedItemColor: AppColors.primary,
             unselectedItemColor: AppColors.secondaryLow,
@@ -174,10 +176,18 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
 
   Widget _buildAccountScreen(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
         title: Text('حسابي والملف الشخصي', style: AppTextStyles.displayMd),
         actions: [
+          IconButton(
+            icon: Icon(
+              context.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: AppColors.primary,
+            ),
+            tooltip: context.isDarkMode ? 'المظهر النهاري' : 'المظهر الليلي (Dark Mode)',
+            onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: AppColors.debtRed),
             tooltip: 'تسجيل الخروج',
@@ -244,9 +254,22 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
                   ),
                   const Divider(height: 1, color: AppColors.surfaceAlt),
                   ListTile(
-                    leading: const Icon(Icons.dark_mode_outlined, color: AppColors.primary),
-                    title: Text('المظهر والسمات', style: AppTextStyles.bodyMd),
-                    trailing: Text('الوضع النهاري', style: AppTextStyles.label.copyWith(color: AppColors.secondaryLow)),
+                    leading: Icon(
+                      context.isDarkMode ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                      color: AppColors.primary,
+                    ),
+                    title: Text('المظهر والسمات (Dark Mode)', style: AppTextStyles.bodyMd),
+                    subtitle: Text(
+                      context.isDarkMode
+                          ? 'الوضع الليلي مفعّل • مريح أثناء الورديات'
+                          : 'الوضع النهاري مفعّل',
+                      style: AppTextStyles.caption.copyWith(color: AppColors.secondaryLow),
+                    ),
+                    trailing: Switch(
+                      value: context.isDarkMode,
+                      activeColor: AppColors.primary,
+                      onChanged: (isDark) => ref.read(themeModeProvider.notifier).toggleTheme(),
+                    ),
                   ),
                 ],
               ),
@@ -312,10 +335,18 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
         title: Text('نظام شِفْتَك • المناوبات والمالية', style: AppTextStyles.displayMd),
         actions: [
+          IconButton(
+            icon: Icon(
+              context.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+              color: AppColors.primary,
+            ),
+            tooltip: context.isDarkMode ? 'المظهر النهاري' : 'المظهر الليلي (Dark Mode)',
+            onPressed: () => ref.read(themeModeProvider.notifier).toggleTheme(),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: () {

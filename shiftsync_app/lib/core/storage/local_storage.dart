@@ -31,19 +31,26 @@ class SecureStorageService {
   }
 }
 
-/// HiveCacheService — Manages offline box storage for schedules and EGP ledger snapshots.
+/// HiveCacheService — Manages offline box storage for schedules, EGP ledger snapshots, and theme preferences.
 class HiveCacheService {
   static const String scheduleBoxName = 'schedule_cache_box';
   static const String ledgerBoxName = 'ledger_cache_box';
+  static const String themeBoxName = 'theme_settings_box';
 
-  static Future<void> init() async {
-    await Hive.initFlutter();
+  static Future<void> init({String? testPath}) async {
+    if (testPath != null) {
+      Hive.init(testPath);
+    } else {
+      await Hive.initFlutter();
+    }
     await Hive.openBox(scheduleBoxName);
     await Hive.openBox(ledgerBoxName);
+    await Hive.openBox(themeBoxName);
   }
 
   static Box getScheduleBox() => Hive.box(scheduleBoxName);
   static Box getLedgerBox() => Hive.box(ledgerBoxName);
+  static Box getThemeBox() => Hive.box(themeBoxName);
 
   static Future<void> clearCache() async {
     await getScheduleBox().clear();

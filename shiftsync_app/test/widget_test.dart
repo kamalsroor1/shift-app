@@ -1,12 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shiftsync_app/core/navigation/main_navigation_scaffold.dart';
+import 'package:shiftsync_app/core/storage/local_storage.dart';
 import 'package:shiftsync_app/main.dart';
 import 'package:dio/dio.dart';
 import 'package:shiftsync_app/core/providers/core_providers.dart';
 
 void main() {
+  setUpAll(() async {
+    final tempDir = await Directory.systemTemp.createTemp('shiftsync_test');
+    await HiveCacheService.init(testPath: tempDir.path);
+  });
+
   testWidgets('Shiftak onboarding, login flow, interactive calendar, and EGP ledger work seamlessly with Riverpod', (WidgetTester tester) async {
     // Build our app starting from WelcomeScreen
     await tester.pumpWidget(

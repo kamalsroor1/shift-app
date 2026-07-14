@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 import '../theme/app_tokens.dart';
 
-/// AppCard — Base floating card container inspired by our minimalist white design.
+/// AppCard — Base floating card container inspired by our minimalist clean design.
 /// Supports directional [accentColor] that renders on the right in RTL (Arabic) or left in LTR.
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -44,9 +45,12 @@ class AppCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.cardSurface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.cardShadow,
+        border: context.isDarkMode
+            ? Border.all(color: const Color(0xFF334155), width: 1)
+            : null,
+        boxShadow: context.isDarkMode ? [] : AppShadows.cardShadow,
       ),
       child: Material(
         color: Colors.transparent,
