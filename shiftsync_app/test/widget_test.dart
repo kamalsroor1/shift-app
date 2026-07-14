@@ -44,5 +44,26 @@ void main() {
     // Verify Bottom Nav items
     expect(find.text('الجدول والورديات'), findsOneWidget);
     expect(find.text('سوق التبادلات'), findsOneWidget);
+
+    // Tap 'حسابي' (Account / Profile tab)
+    await tester.tap(find.text('حسابي'));
+    await tester.pumpAndSettle();
+
+    // Verify Account Profile screen & Logout button
+    expect(find.text('حسابي والملف الشخصي'), findsOneWidget);
+    expect(find.text('إدارة الجلسة الحالية'), findsOneWidget);
+    expect(find.textContaining('تسجيل الخروج من نظام شِفْتَك'), findsOneWidget);
+
+    // Tap logout button and verify confirmation dialog opens
+    await tester.ensureVisible(find.textContaining('تسجيل الخروج من نظام شِفْتَك'));
+    await tester.tap(find.textContaining('تسجيل الخروج من نظام شِفْتَك'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('هل أنت متأكد من رغبتك في تسجيل الخروج من نظام شِفْتَك وإخلاء الجلسة المؤقتة من هذا الجهاز؟'), findsOneWidget);
+    expect(find.text('إلغاء'), findsOneWidget);
+
+    // Cancel logout dialog
+    await tester.tap(find.text('إلغاء'));
+    await tester.pumpAndSettle();
   });
 }

@@ -7,6 +7,8 @@ import '../widgets/shift_calendar.dart';
 import '../widgets/status_chip.dart';
 import '../../features/ledger/presentation/providers/ledger_provider.dart';
 import '../../features/schedule/presentation/providers/schedule_provider.dart';
+import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/presentation/welcome_screen.dart';
 
 class MainNavigationScaffold extends ConsumerStatefulWidget {
   const MainNavigationScaffold({super.key});
@@ -33,6 +35,60 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
       today.add(const Duration(days: 4)): ShiftType.long,
       today.add(const Duration(days: 6)): ShiftType.night,
     };
+  }
+
+  Future<void> _confirmAndLogout(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(Icons.logout_rounded, color: AppColors.debtRed, size: 28),
+            const SizedBox(width: AppSpacing.md),
+            Text('تسجيل الخروج', style: AppTextStyles.headingLg),
+          ],
+        ),
+        content: Text(
+          'هل أنت متأكد من رغبتك في تسجيل الخروج من نظام شِفْتَك وإخلاء الجلسة المؤقتة من هذا الجهاز؟',
+          style: AppTextStyles.bodyMd,
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text('إلغاء', style: AppTextStyles.label.copyWith(color: AppColors.secondaryLow)),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.debtRed,
+              foregroundColor: AppColors.surface,
+            ),
+            icon: const Icon(Icons.logout_rounded, size: 18),
+            label: const Text('تسجيل الخروج'),
+            onPressed: () => Navigator.of(ctx).pop(true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final repo = ref.read(authRepositoryProvider);
+      await repo.logout();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+          (route) => false,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('تم تسجيل الخروج من حسابك بنجاح. نراك قريباً 👋', style: AppTextStyles.bodySm.copyWith(color: AppColors.surface)),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -110,10 +166,136 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     );
   }
 
+  Widget _buildAccountScreen(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text('حسابي والملف الشخصي', style: AppTextStyles.displayMd),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: AppColors.debtRed),
+            tooltip: 'تسجيل الخروج',
+            onPressed: () => _confirmAndLogout(context),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // User Profile Header Card
+            AppCard(
+              padding: const EdgeInsets.all(AppSpacing.xl),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 36,
+                    backgroundColor: AppColors.primaryLight,
+                    child: Text(
+                      'ك س',
+                      style: AppTextStyles.displayMd.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('كمال سرور', style: AppTextStyles.headingLg),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text('مدير النظام (Super Admin)', style: AppTextStyles.bodySm.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text('الهاتف: 07800000000\nالقسم: الطوارئ (Emergency)', style: AppTextStyles.monoMd.copyWith(fontSize: 13, color: AppColors.secondaryLow)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xxxl),
+            Text('إعدادات النظام والتطبيقات', style: AppTextStyles.headingMd),
+            const SizedBox(height: AppSpacing.md),
+
+            AppCard(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.notifications_active_outlined, color: AppColors.primary),
+                    title: Text('إشعارات المناوبات والتبادلات', style: AppTextStyles.bodyMd),
+                    trailing: Switch(value: true, activeColor: AppColors.primary, onChanged: (v) {}),
+                  ),
+                  const Divider(height: 1, color: AppColors.surfaceAlt),
+                  ListTile(
+                    leading: const Icon(Icons.language_rounded, color: AppColors.primary),
+                    title: Text('لغة واجهة الاستخدام', style: AppTextStyles.bodyMd),
+                    trailing: Text('العربية (ar)', style: AppTextStyles.label.copyWith(color: AppColors.primary)),
+                  ),
+                  const Divider(height: 1, color: AppColors.surfaceAlt),
+                  ListTile(
+                    leading: const Icon(Icons.dark_mode_outlined, color: AppColors.primary),
+                    title: Text('المظهر والسمات', style: AppTextStyles.bodyMd),
+                    trailing: Text('الوضع النهاري', style: AppTextStyles.label.copyWith(color: AppColors.secondaryLow)),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: AppSpacing.xxxl),
+            Text('الأمان والجلسة', style: AppTextStyles.headingMd),
+            const SizedBox(height: AppSpacing.md),
+
+            // Prominent Logout Card
+            AppCard(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.security_rounded, color: AppColors.secondaryLow),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text('إدارة الجلسة الحالية', style: AppTextStyles.headingSm),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('يمكنك تسجيل الخروج من الجهاز الحالي مع الاحتفاظ بكافة بيانات ومناوبات حسابك بأمان في خوادم شِفْتَك.', style: AppTextStyles.bodySm),
+                  const SizedBox(height: AppSpacing.lg),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.debtRed,
+                        foregroundColor: AppColors.surface,
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                      ),
+                      icon: const Icon(Icons.logout_rounded),
+                      label: const Text('تسجيل الخروج من نظام شِفْتَك'),
+                      onPressed: () => _confirmAndLogout(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildBodyContent(
     Map<DateTime, ShiftType> shifts,
     AsyncValue<List<Map<String, dynamic>>> ledgerAsync,
   ) {
+    if (_currentIndex == 4) {
+      return _buildAccountScreen(context);
+    }
+
     if (_currentIndex != 0) {
       final tabNames = [
         'الجدول والورديات',
@@ -126,6 +308,14 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
         backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(tabNames[_currentIndex], style: AppTextStyles.displayMd),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout_rounded, color: AppColors.debtRed),
+              tooltip: 'تسجيل الخروج',
+              onPressed: () => _confirmAndLogout(context),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+          ],
         ),
         body: Center(
           child: AppCard(
@@ -170,6 +360,11 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
               ref.read(scheduleNotifierProvider.notifier).fetchCurrentMonth();
               ref.read(ledgerNotifierProvider.notifier).fetchEntries();
             },
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout_rounded, color: AppColors.debtRed),
+            tooltip: 'تسجيل الخروج',
+            onPressed: () => _confirmAndLogout(context),
           ),
           const SizedBox(width: AppSpacing.sm),
         ],
