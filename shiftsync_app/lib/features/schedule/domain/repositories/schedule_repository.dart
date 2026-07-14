@@ -54,6 +54,10 @@ class ScheduleRepository {
       }
       throw ApiException('فشل في جلب جدول الورديات من الخادم.');
     } on DioException catch (e) {
+      // 404 simply means no schedule items generated/found for this month yet
+      if (e.response?.statusCode == 404) {
+        return {};
+      }
       // Offline fallback: check if we have last-known schedules cached in Hive
       if (box.containsKey(cacheKey)) {
         try {

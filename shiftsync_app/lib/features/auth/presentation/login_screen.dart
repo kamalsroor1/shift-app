@@ -15,8 +15,8 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _phoneController = TextEditingController(text: '01000000000');
-  final _passwordController = TextEditingController(text: 'secret123');
+  final _phoneController = TextEditingController(text: '07800000000');
+  final _passwordController = TextEditingController(text: 'AdminSecret123!');
   bool _obscurePassword = true;
   bool _rememberMe = true;
   bool _isLoading = false;
@@ -87,6 +87,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text('مرحباً بك مجدداً 👋', style: AppTextStyles.displayMd),
               const SizedBox(height: AppSpacing.xs),
               Text('أدخل بيانات الاعتماد الخاصة بك للوصول لجدول المناوبات والمالية.', style: AppTextStyles.bodyMd),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              // Test Account Helper Banner
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: AppColors.claimGreen.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.claimGreen.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded, color: AppColors.claimGreen, size: 22),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('حساب تجريبي حقيقي مفعّل (Live Test Account)', style: AppTextStyles.label.copyWith(color: AppColors.claimGreen, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 2),
+                          Text('الهاتف: 07800000000\nكلمة المرور: AdminSecret123!', style: AppTextStyles.monoMd.copyWith(fontSize: 13, color: AppColors.primary)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               const SizedBox(height: AppSpacing.xxxl),
 

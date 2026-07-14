@@ -23,6 +23,9 @@ class MarketplaceRepository {
       }
       return [];
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
       throw ApiException.fromDioException(e);
     }
   }

@@ -32,6 +32,9 @@ class LedgerRepository {
       }
       return [];
     } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return [];
+      }
       if (box.containsKey(cacheKey)) {
         try {
           final String cachedJson = box.get(cacheKey);

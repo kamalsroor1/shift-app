@@ -142,7 +142,7 @@ def seed_database():
     console.print("[bold green][SEED][/bold green] Seeding initial data into database...")
     
     async def _seed_async():
-        from app.db.session import async_session_maker
+        from app.db.session import AsyncSessionLocal as async_session_maker
         from app.models.department import Department
         from app.models.user import User, UserRole
         from app.core.security import get_password_hash

@@ -28,6 +28,7 @@ void main() {
     expect(find.textContaining('دخول تجريبي سريع'), findsOneWidget);
 
     // Tap Quick Demo Login button to reach MainNavigationScaffold
+    await tester.ensureVisible(find.textContaining('دخول تجريبي سريع'));
     await tester.tap(find.textContaining('دخول تجريبي سريع'));
     await tester.pumpAndSettle();
 
