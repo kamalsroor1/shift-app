@@ -9,12 +9,14 @@ import 'shift_badge.dart';
 class ShiftCalendar extends StatefulWidget {
   final DateTime selectedDay;
   final Function(DateTime selectedDay, DateTime focusedDay) onDaySelected;
+  final Function(DateTime focusedDay)? onMonthChanged;
   final Map<DateTime, ShiftType> shifts;
 
   const ShiftCalendar({
     super.key,
     required this.selectedDay,
     required this.onDaySelected,
+    this.onMonthChanged,
     required this.shifts,
   });
 
@@ -128,6 +130,7 @@ class _ShiftCalendarState extends State<ShiftCalendar> {
               setState(() {
                 _focusedDay = focusedDay;
               });
+              widget.onMonthChanged?.call(focusedDay);
             },
             headerVisible: false, // We built our own custom header above!
             daysOfWeekStyle: DaysOfWeekStyle(

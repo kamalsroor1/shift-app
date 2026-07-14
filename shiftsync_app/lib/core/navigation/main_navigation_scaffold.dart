@@ -399,6 +399,12 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
             const SizedBox(height: AppSpacing.md),
             ShiftCalendar(
               selectedDay: _selectedDay,
+              onMonthChanged: (focused) {
+                if (focused.month != _selectedDay.month || focused.year != _selectedDay.year) {
+                  setState(() => _selectedDay = DateTime(focused.year, focused.month, 1));
+                  ref.read(scheduleNotifierProvider.notifier).fetchMonth(focused.year, focused.month);
+                }
+              },
               onDaySelected: (selected, focused) {
                 setState(() => _selectedDay = selected);
                 final normalized = DateTime(selected.year, selected.month, selected.day);

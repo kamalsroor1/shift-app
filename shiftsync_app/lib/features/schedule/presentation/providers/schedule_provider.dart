@@ -40,4 +40,13 @@ class ScheduleNotifier extends AsyncNotifier<Map<DateTime, ShiftType>> {
     currentMap[normalized] = newShift;
     state = AsyncValue.data(currentMap);
   }
+
+  Future<void> updateBatchShifts(Map<DateTime, ShiftType> batchMap) async {
+    final currentMap = state.value != null ? Map<DateTime, ShiftType>.from(state.value!) : <DateTime, ShiftType>{};
+    batchMap.forEach((date, shiftType) {
+      final normalized = DateTime(date.year, date.month, date.day);
+      currentMap[normalized] = shiftType;
+    });
+    state = AsyncValue.data(currentMap);
+  }
 }
