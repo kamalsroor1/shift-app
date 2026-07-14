@@ -538,13 +538,13 @@ lib/
 
 ---
 
-### Phase 5: API Integration & Real-Time State Refresh
+### Phase 5: API Integration & Real-Time State Refresh [IN PROGRESS / CORE COMPLETED]
 
 **Goal:** Flutter app fully connected to FastAPI backend; real-time updates working via WebSockets.
 
 ---
 
-**TASK-025** — `@flutter-agent`  
+**TASK-025 [COMPLETED]** — `@flutter-agent`  
 **Title:** Implement Dio client with auth interceptor and base repository  
 **Depends on:** TASK-017 (WebSockets running), TASK-011 (Auth token stored)  
 **Steps:**
@@ -557,12 +557,12 @@ lib/
 
 ---
 
-**TASK-026** — `@flutter-agent`  
+**TASK-026 [COMPLETED]** — `@flutter-agent`  
 **Title:** Connect Calendar screen to Schedule API  
 **Depends on:** TASK-025, TASK-013  
 **Steps:**
 1. `ScheduleRepository` — Dio calls for GET month and POST/DELETE shift.
-2. `ScheduleNotifier` (StateNotifierProvider) — manages `Map<DateTime, ShiftType>` state.
+2. `ScheduleNotifier` (AsyncNotifierProvider) — manages `Map<DateTime, ShiftType>` state.
 3. Replace mock data in `CalendarScreen` with real provider.
 4. Hive caching: store last-fetched month schedule locally; use cache while loading.
 5. On assignment, optimistic update + background API call; revert on failure.
@@ -571,7 +571,7 @@ lib/
 
 ---
 
-**TASK-027** — `@flutter-agent`  
+**TASK-027 [COMPLETED]** — `@flutter-agent`  
 **Title:** Connect Marketplace & Swap screens to APIs  
 **Depends on:** TASK-025, TASK-014, TASK-015  
 **Steps:**
@@ -585,7 +585,7 @@ lib/
 
 ---
 
-**TASK-028** — `@flutter-agent`  
+**TASK-028 [COMPLETED]** — `@flutter-agent`  
 **Title:** Connect Ledger screen to Financial Ledger API  
 **Depends on:** TASK-025, TASK-016  
 **Steps:**
