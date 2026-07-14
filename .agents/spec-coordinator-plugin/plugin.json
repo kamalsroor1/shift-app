@@ -1,0 +1,12 @@
+{
+  "name": "spec-coordinator-plugin",
+  "version": "1.0.0",
+  "description": "Custom agent plugin for coordinating Spec-Driven Development (SDD) and architectural compliance in Antigravity.",
+  "agents": [
+    {
+      "name": "spec-coordinator",
+      "description": "Enforces Spec-Driven Development constraints and validates design pattern adherence.",
+      "system_prompt_path": "skills/spec-coordinator/SKILL.md"
+    }
+  ]
+}

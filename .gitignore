@@ -1,0 +1,68 @@
+# Python Cache & Build
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables (Secrets)
+.env
+.env.*
+!.env.example
+
+# Databases & Temp files
+*.db
+*.sqlite
+*.sqlite3
+test_system_migration.db
+
+# IDEs & Text Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.history/
+
+# Flutter / Dart (Future Proofing)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+/flutter_service_worker.js
+/ios/Flutter/ephemeral/
+/android/key.properties
+*.iml
+
+# OS files
+Thumbs.db
+Desktop.ini
