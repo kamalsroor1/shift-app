@@ -26,10 +26,23 @@ def test_department_defaults():
     session.close()
 
 def test_user_role_values():
-    """Verify UserRole enum values."""
+    """Verify UserRole enum values and that SQLAlchemy maps role string correctly."""
     assert UserRole.NURSE.value == "nurse"
     assert UserRole.PARTNER.value == "partner"
     assert UserRole.ADMIN.value == "admin"
+
+    session = get_clean_session()
+    dept = Department(uuid="dept-test-role", name="Role Test", code="ROLE")
+    session.add(dept)
+    session.flush()
+
+    user = User(uuid="user-role-1", department_id=dept.id, full_name="Role User", employee_id="EMP-R1", phone="07899999999", password="pw", role=UserRole.PARTNER)
+    session.add(user)
+    session.commit()
+
+    assert user.role == UserRole.PARTNER
+    assert user.role.value == "partner"
+    session.close()
 
 def test_schedule_defaults():
     """Verify default values on Schedule persist."""
