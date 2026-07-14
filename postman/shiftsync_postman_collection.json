@@ -268,7 +268,14 @@
                   "    pm.expect(jsonData).to.have.property(\"uuid\");",
                   "    pm.expect(jsonData).to.have.property(\"phone\");",
                   "    pm.expect(jsonData).to.have.property(\"department\");",
-                  "});"
+                  "});",
+                  "",
+                  "if (jsonData.uuid) {",
+                  "    pm.environment.set(\"user_uuid\", jsonData.uuid);",
+                  "}",
+                  "if (jsonData.department && jsonData.department.uuid) {",
+                  "    pm.environment.set(\"department_uuid\", jsonData.department.uuid);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }

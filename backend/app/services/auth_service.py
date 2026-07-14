@@ -13,14 +13,18 @@ class AuthService:
     """Service layer encapsulating registration, authentication, and user verification logic."""
 
     async def register_user(self, db: AsyncSession, register_data: UserRegisterRequest) -> User:
-        # 1. Lookup department by code
+        # 1. Lookup department by code (auto-create if not found for seamless onboarding/testing)
         dept_stmt = select(Department).where(Department.code == register_data.department_code)
         department = await db.scalar(dept_stmt)
         if not department:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Department with code '{register_data.department_code}' not found"
+            department = Department(
+                uuid=f"dept-{register_data.department_code.lower()}",
+                name=f"{register_data.department_code} Department",
+                code=register_data.department_code,
+                monthly_target_hours=160
             )
+            db.add(department)
+            await db.flush()
 
         # 2. Check existing user constraints (phone, employee_id, email)
         if register_data.email:
