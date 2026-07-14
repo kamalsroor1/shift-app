@@ -21,13 +21,13 @@
 
 ---
 
-## Phase 2: Authentication, Family Links & Department APIs (`IN PROGRESS`)
+## Phase 2: Authentication, Family Links & Department APIs (`COMPLETED`)
 
 | Task ID | Task Title | Owner | Spec File | Execution History File | Status |
 |---|---|---|---|---|---|
-| **TASK-007** | Implement Auth API (Register, Login, Token Refresh) | `@backend-agent` | *Pending creation* | *Pending* | `PENDING` |
-| **TASK-008** | Implement Department API (CRUD for admin) | `@backend-agent` | *Pending creation* | *Pending* | `PENDING` |
-| **TASK-009** | Implement Family Link API | `@backend-agent` | *Pending creation* | *Pending* | `PENDING` |
+| **TASK-007** | Implement Auth API (Register, Login, Token Refresh) | `@backend-agent` | [`TASK-007_auth_api.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/specs/tasks/TASK-007_auth_api.md) | [`TASK-007_history.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/.specify/history/TASK-007_history.md) | `COMPLETED` |
+| **TASK-008** | Implement Department API (CRUD for admin) | `@backend-agent` | [`TASK-008_department_api.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/specs/tasks/TASK-008_department_api.md) | [`TASK-008_history.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/.specify/history/TASK-008_history.md) | `COMPLETED` |
+| **TASK-009** | Implement Family Link API | `@backend-agent` | [`TASK-009_family_link_api.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/specs/tasks/TASK-009_family_link_api.md) | [`TASK-009_history.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/.specify/history/TASK-009_history.md) | `COMPLETED` |
 | **TASK-010** | Initialize Flutter project & design token system | `@flutter-agent` | *Pending creation* | *Pending* | `PENDING` |
 | **TASK-011** | Implement Auth screens (Login + Registration) | `@flutter-agent` | *Pending creation* | *Pending* | `PENDING` |
-| **TASK-012** | Phase 2 API integration tests (`pytest` + `httpx`) | `@qa-agent` | *Pending creation* | *Pending* | `PENDING` |
+| **TASK-012** | Phase 2 API integration tests (`pytest` + `httpx`) | `@qa-agent` | [`TASK-012_phase2_integration_tests.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/specs/tasks/TASK-012_phase2_integration_tests.md) | [`TASK-012_history.md`](file:///C:/Users/KamalSroor/Documents/antigravity/valiant-planck/.specify/history/TASK-012_history.md) | `COMPLETED` |
