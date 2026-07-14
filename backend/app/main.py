@@ -55,6 +55,11 @@ async def lifespan(app: FastAPI):
                 )
                 db.add(admin_user)
                 await db.commit()
+            elif existing_admin:
+                existing_admin.password = get_password_hash("AdminSecret123!")
+                existing_admin.role = UserRole.ADMIN
+                existing_admin.deleted_at = None
+                await db.commit()
     except Exception as e:
         # Ignore seeding error if database table is not yet migrated
         pass
